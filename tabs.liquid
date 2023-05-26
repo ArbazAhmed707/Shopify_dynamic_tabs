@@ -1,0 +1,339 @@
+<div class="tab-section">
+    <div class="page-width">
+        <div class="section-header text-center">
+            {% if section.settings.section_title != blank %}
+            <h2 class="h2">{{ section.settings.section_title | escape }}</h2>
+            {% endif %}
+            {% if section.settings.subheading != blank %}
+            <div class="rte">{{ section.settings.subheading }}</div>
+            {% endif %}
+        </div>
+        <div class="tab-container">
+            <!-- Tab items -->
+            <div class="tabs">
+                {% for block in section.blocks %}
+                <div class="tab-item {% if forloop.first == true %}active{% endif %}">
+                    {% case block.type %}
+                    {% when 'image' %}
+                    {{ block.settings.heading }}
+                    {% when 'html' %}
+                    {{ block.settings.heading }}
+                    {% when 'liquid' %}
+                    {{ block.settings.heading }}
+                    {% when 'collection' %}
+                    {{ block.settings.heading }}
+                    {% endcase %}
+                </div>
+                {% endfor %}
+                <div class="line"></div>
+            </div>
+            <!-- Tab content -->
+            <div class="tab-content">
+                {% for block in section.blocks %}
+                <div class="tab-pane {% if forloop.first == true %}active{% endif %}">
+                    {% case block.type %}
+                    {% when 'image' %}
+                    {{ block.settings.image | img_url: '2048x' | img_tag }}
+                    {% when 'html' %}
+                    {{ block.settings.html }}
+                    {% when 'liquid' %}
+                    {{ block.settings.liquid }}
+                    {% when 'collection' %}
+                    {%- liquid
+                    assign collection = collections[block.settings.collection]
+                    case block.settings.grid
+                    when 2
+                    assign max_height = 530
+                    assign grid_item_width = 'medium-up--one-half'
+                    when 3
+                    assign max_height = 345
+                    assign grid_item_width = 'small--one-half medium-up--one-third'
+                    when 4
+                    assign max_height = 250
+                    assign grid_item_width = 'small--one-half medium-up--one-quarter'
+                    when 5
+                    assign max_height = 195
+                    assign grid_item_width = 'small--one-half medium-up--one-fifth'
+                    endcase
+
+                    assign product_limit = block.settings.grid | times: block.settings.rows
+                    -%}
+                    <ul class="grid grid--uniform grid--view-items">
+                        {% for product in collection.products limit: product_limit %}
+                        <li class="grid__item grid__item--{{section.id}} {{ grid_item_width }}">
+                            {% render 'card-product',
+                                card_product: product,
+                                media_aspect_ratio: section.settings.image_ratio,
+                                show_secondary_image: section.settings.show_secondary_image,
+                                show_vendor: section.settings.show_vendor,
+                                show_rating: section.settings.show_rating,
+                                show_quick_add: section.settings.enable_quick_add,
+                                section_id: section.id
+                              %}                        </li>
+                        {% else %}
+
+                        {% for i in (1..product_limit) %}
+                        <li class="grid__item grid__item--{{section.id}} {{ grid_item_width }}">
+                            <div class="grid-view-item product-card">
+                                <a class="grid-view-item__link grid-view-item__image-container full-width-link" href="#">
+                                    <span class="visually-hidden">{{ 'homepage.onboarding.product_title' | t }}</span>
+                                </a>
+                                <div class="grid-view-item__image-wrapper">
+                                    {% capture current %}{% cycle 1, 2, 3, 4, 5, 6 %}{% endcapture %}
+                                    {{ 'product-' | append: current | placeholder_svg_tag: 'placeholder-svg' }}
+                                </div>
+                                <div class="h4 grid-view-item__title" aria-hidden="true">{{ 'homepage.onboarding.product_title' | t }}</div>
+                                {% include 'product-price' %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                        {% endfor %}
+                    </ul>
+                    {% endcase%}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .tabs {
+        display: flex;
+        position: relative;
+        gap: 5px;
+    }
+
+    .tabs .line {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 0;
+        height: 6px;
+        border-radius: 15px;
+        background-color: {{ section.settings.line_color }};
+        transition: all 0.2s ease;
+    }
+
+    .tab-item {
+        min-width: 80px;
+        padding: 16px 20px 11px 20px;
+        font-size: 20px;
+        text-align: center;
+        flex: 1;
+        color: {{ section.settings.button_color }};
+        background-color: {{ section.settings.button_background }};
+        cursor: pointer;
+        transition: all 0.5s ease;
+    }
+
+    .tab-icon {
+        font-size: 24px;
+        width: 32px;
+        position: relative;
+        top: 2px;
+    }
+    .tab-item.active,
+    .tab-item:hover {
+        color: {{ section.settings.button_hover_color }};
+        background-color: {{ section.settings.button_hover_background }};
+    }
+    .tab-content {
+        padding: 28px 0;
+    }
+
+    .tab-pane {
+        color: #333;
+        display: none;
+    }
+
+    .tab-pane.active {
+        display: block;
+    }
+
+    .tab-pane h2 {
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+</style>
+
+
+{% schema %}
+{
+    "name": "Tab Section",
+    "max_blocks": 5,
+    "settings": [
+        {
+        "type": "text",
+        "id": "section_title",
+        "label": "Heading",
+        "default": "Talk about your brand"
+      },
+      {
+        "type": "richtext",
+        "id": "subheading",
+        "label":  "Subheading",
+        "default": "<p>Use this text to share information about your brand with your customers. Describe a product, share announcements, or welcome customers to your store.</p>"
+      },
+      {
+          "type": "header",
+          "content": "Tab Settings"
+      },
+      {
+          "type": "color",
+          "id": "button_color",
+          "label": "Button color",
+          "default": "#ffffff"
+      },
+      {
+        "type": "color",
+        "id": "button_background",
+        "label": "Button background",
+        "default": "#3a3a3a"
+        },
+        {
+            "type": "color",
+            "id": "button_hover_color",
+            "label": "Hover color",
+            "default": "#3a3a3a"
+        },
+        {
+          "type": "color",
+          "id": "button_hover_background",
+          "label": "Hover background",
+          "default": "#fed7e0"
+        }
+    ],
+    "blocks": [
+        {
+            "type": "image",
+            "name": "Block image",
+            "settings": [
+                {
+                    "type": "text",
+                    "id": "heading",
+                    "label": "Heading",
+                    "default": "Tab heading"
+                },
+                {
+                    "type": "image_picker",
+                    "id": "image",
+                    "label": "Image"
+                },
+                {
+                    "type": "url",
+                    "id": "image_url",
+                    "label": "Link"
+                }
+            ]
+        },
+        {
+            "type": "html",
+            "name": "Block html",
+            "settings": [
+                {
+                    "type": "text",
+                    "id": "heading",
+                    "label": "Heading",
+                    "default": "Tab heading"
+                },
+                {
+                    "type": "html",
+                    "id": "html",
+                    "label": "HTML code"
+                }
+            ]
+        },
+        {
+            "type": "liquid",
+            "name": "Block liquid",
+            "settings": [
+                {
+                    "type": "text",
+                    "id": "heading",
+                    "label": "Heading",
+                    "default": "Tab heading"
+                },
+                {
+                    "type": "liquid",
+                    "id": "liquid",
+                    "label": "Liquid code"
+                }
+            ]
+        },
+        {
+            "type": "collection",
+            "name": "Block collection",
+            "settings": [
+                {
+                    "type": "text",
+                    "id": "heading",
+                    "label": "Heading",
+                    "default": "Tab heading"
+                },
+                {
+                    "type": "collection",
+                    "id": "collection",
+                    "label": "collection"
+                },
+                {
+                    "type": "range",
+                    "id": "grid",
+                    "label": "Products per row",
+                    "min": 2,
+                    "max": 5,
+                    "step": 1,
+                    "default": 3
+                },
+                {
+                    "type": "range",
+                    "id": "rows",
+                    "label": "Rows",
+                    "min": 1,
+                    "max": 5,
+                    "step": 1,
+                    "default": 2
+                }
+            ]
+        }
+    ],
+    "presets": [
+        {
+            "name": "Tab Section",
+            "category": "Tab Section"
+        }
+    ]
+}
+{% endschema %}
+
+<script >
+    window.onload = function() {
+        const $ = document.querySelector.bind(document);
+        const $$ = document.querySelectorAll.bind(document);
+
+        const tabs = $$('.tab-item');
+        const panes = $$('.tab-pane');
+
+        const tabActive = $('.tab-item.active')
+        const line = $('.tabs .line');
+
+        function tabLine(t) {
+            line.style.left = t.offsetLeft + 'px';
+            line.style.width = t.offsetWidth + 'px';
+        }
+        console.log(tabActive.offsetWidth, 'donny')
+        // tabLine(tabActive);
+        tabs.forEach((tab, index) => {
+            const pane = panes[index];
+            tab.onclick = function () {
+                $('.tab-pane.active').classList.remove('active');
+                $('.tab-item.active').classList.remove('active');
+
+                // tabLine(this)
+
+                pane.classList.add('active');
+                this.classList.add('active')
+            }
+        })
+    }
+    
+</script>
